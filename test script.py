@@ -6,8 +6,6 @@
 #Understanding battery parameters
 
 """Show battery information.
-
-$ python3 scripts/battery.py
 charge:     74%
 left:       2:11:31
 status:     discharging
@@ -17,8 +15,10 @@ plugged in: no
 import sys
 import psutil
 
+MIN = 60
+MAX = 80
 def secs2hours(secs):
-    mm, ss = divmod(secs, 60)
+    mm, ss = divmod(secs, 30)
     hh, mm = divmod(mm, 60)
     return f"{int(hh)}:{int(mm):02}:{int(ss):02}"
 
@@ -50,7 +50,26 @@ def main():
         print(f"left:      {secs2hours(batt.secsleft)}")
         print("status:     discharging")
         print("plugged in: no")
-
-
+def checkBatteryHealth():
+    batt = getBatteryStatus()
+    status = "Good"
+    is_healthy = True
+    if batt.percent < MIN and batt.power_plugged == False:
+        status = "Battery too low please plug in your laptop to remove notification"
+        is_healthy = False
+    if batt.percent > MAX and batt.power_plugged == True:
+        status = "Battery high, unplug your laptop to remove notification"
+        is_healthy = False
+    return [is_healthy,status]
+    
 if __name__ == '__main__':
-    getBatteryStatus()
+    import time
+    print("Starting monitoring")
+    while True:
+        checker = checkBatteryHealth()
+        print(checker)
+        if checker[0] == False:
+            print(checker[1] + " now!!!!")
+            break
+
+        time.sleep(60)
